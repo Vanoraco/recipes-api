@@ -21,6 +21,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -29,6 +30,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+
+	"github.com/go-redis/redis/v8"
 )
 
 var ctx context.Context
@@ -46,6 +49,7 @@ func init() {
 
     ctx = context.Background()
 
+
 	client, err = mongo.Connect(ctx, 
 	options.Client().ApplyURI(os.Getenv("MONGO_URI")))
       if err != nil {
@@ -60,8 +64,20 @@ func init() {
 	log.Println("Connected to MongoDB")
 
 	collection := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+		Password: "",
+		DB: 0,
+	})
 	
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
+	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
+
+	
+
+	status := redisClient.Ping(context.Background())
+
+	fmt.Println(status)
 	/* var listOfRecipes []interface{}
 
 	for _, recipe := range recipes {
